@@ -13,7 +13,7 @@ func main() {
 	test := "test"
 	router.GET("/balances", func(c *gin.Context) {
 		balances.Hello(&test)
-		balances := balances.GetBalances(c)
+		balances := balances.GetDefaultBalance("0x71c7656ec7ab88b098defb751b7401b5f6d8976f", 1)
 		c.IndentedJSON(http.StatusOK, balances)
 
 	})

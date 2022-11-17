@@ -4,28 +4,22 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
-type wallet struct {
-	ADDRESS  string    `json:"walletAddress"`
-	BALANCES []balance `json:"balances"`
+type Wallet struct {
+	ADDRESS  string
+	BALANCES []Balance
 }
 
-type balance struct {
-	CHAINID int `json:"chain_id"`
-	Balance int `json:"balance"`
-}
-
-var balances = []balance{
-	{CHAINID: 1, Balance: 0.00},
-	{CHAINID: 5, Balance: 0.00},
-	{CHAINID: 137, Balance: 0.00},
+type Balance struct {
+	CHAINID int
+	BALANCE *big.Int
 }
 
 func Hello(test *string) {
@@ -33,38 +27,51 @@ func Hello(test *string) {
 	fmt.Println("within aftr " + *test)
 }
 
-func goDotEnvVariable(key string) string {
-
-	// load .env file
+func goGetDotEnv(key string) string {
 	err := godotenv.Load("./.env")
-
 	if err != nil {
 		log.Fatalf("Error loading .env file")
 	}
-
 	return os.Getenv(key)
 }
 
-func GetBalances(c *gin.Context) []balance {
-	//fmt.Println("within " + goDotEnvVariable("INFURA_KEY"))
-	client, err := ethclient.Dial("https://mainnet.infura.io/v3/" + goDotEnvVariable("INFURA_KEY"))
-	account := common.HexToAddress("0x71c7656ec7ab88b098defb751b7401b5f6d8976f")
+func GetDefaultBalance(address string, chainId int) Wallet {
+	account := common.HexToAddress(address)
+	wallet := Wallet{
+		ADDRESS: account.String(),
+	}
 
+	//goerli, polygon-mainnet, polygon-mumbai, rinkeby, ropsten, kovan, mainnet
+	client, err := ethclient.Dial(infuraStringMaker(1))
 	balance, err := client.BalanceAt(context.Background(), account, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	//goerli
-	client2, err := ethclient.Dial("https://polygon-mainnet.infura.io/v3/" + goDotEnvVariable("INFURA_KEY"))
+	wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: 1, BALANCE: balance})
+	return wallet
+}
 
-	balance2, err := client2.BalanceAt(context.Background(), account, nil)
-	if err != nil {
-		log.Fatal(err)
+func infuraStringMaker(chainId int) string {
+	url := "https://"
+	switch chainId {
+	case 1:
+		url = url + "mainnet"
+	case 3:
+		url = url + "ropsten"
+	case 4:
+		url = url + "rinkeby"
+	case 5:
+		url = url + "goerli"
+	case 42:
+		url = url + "kovan"
+	case 137:
+		url = url + "polygon-mainnet"
+	case 80001:
+		url = url + "polygon-mumbai"
+	default:
+		url = url + "mainnet"
 	}
 
-	balances[0].Balance = int(balance.Int64())
-	balances[2].Balance = int(balance2.Int64())
-
-	return balances
+	return url + ".infura.io/v3/" + goGetDotEnv("INFURA_KEY")
 }

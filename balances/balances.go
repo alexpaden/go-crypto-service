@@ -2,7 +2,6 @@ package balances
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
@@ -21,11 +20,6 @@ type Wallet struct {
 type Balance struct {
 	CHAINID int
 	BALANCE decimal.Decimal
-}
-
-func Hello(test *string) {
-	*test = "other"
-	fmt.Println("within aftr " + *test)
 }
 
 // retrieves env variables from ./.env file
@@ -70,13 +64,13 @@ func GetDefaultBalance(address string, chainId int) Wallet {
 	}
 
 	//goerli, polygon-mainnet, polygon-mumbai, rinkeby, ropsten, kovan, mainnet
-	client, err := ethclient.Dial(infuraStringMaker(1))
+	client, err := ethclient.Dial(infuraStringMaker(chainId))
 	wei, err := client.BalanceAt(context.Background(), account, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	eth := util.ToDecimal(wei, 18)
-	wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: 1, BALANCE: eth})
+	wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: chainId, BALANCE: eth})
 
 	client.Close()
 
@@ -101,6 +95,26 @@ func GetAllBalances(address string) Wallet {
 		eth := util.ToDecimal(wei, 18)
 		wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: chainId, BALANCE: eth})
 	}
+
+	return wallet
+}
+
+func GetBalanceToken(address string, chainId int, tokenAddress string) Wallet {
+	account := common.HexToAddress(address)
+	wallet := Wallet{
+		ADDRESS: account.String(),
+	}
+
+	//goerli, polygon-mainnet, polygon-mumbai, rinkeby, ropsten, kovan, mainnet
+	client, err := ethclient.Dial(infuraStringMaker(chainId))
+	wei, err := client.BalanceAt(context.Background(), account, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	eth := util.ToDecimal(wei, 18)
+	wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: chainId, BALANCE: eth})
+
+	client.Close()
 
 	return wallet
 }

@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math/big"
 	"os"
 
+	util "github.com/alexpaden/go-crypto-service/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/joho/godotenv"
+	"github.com/shopspring/decimal"
 )
 
 type Wallet struct {
@@ -19,7 +20,7 @@ type Wallet struct {
 
 type Balance struct {
 	CHAINID int
-	BALANCE *big.Int
+	BALANCE decimal.Decimal
 }
 
 func Hello(test *string) {
@@ -27,6 +28,7 @@ func Hello(test *string) {
 	fmt.Println("within aftr " + *test)
 }
 
+// retrieves env variables from ./.env file
 func goGetDotEnv(key string) string {
 	err := godotenv.Load("./.env")
 	if err != nil {
@@ -35,23 +37,7 @@ func goGetDotEnv(key string) string {
 	return os.Getenv(key)
 }
 
-func GetDefaultBalance(address string, chainId int) Wallet {
-	account := common.HexToAddress(address)
-	wallet := Wallet{
-		ADDRESS: account.String(),
-	}
-
-	//goerli, polygon-mainnet, polygon-mumbai, rinkeby, ropsten, kovan, mainnet
-	client, err := ethclient.Dial(infuraStringMaker(1))
-	balance, err := client.BalanceAt(context.Background(), account, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: 1, BALANCE: balance})
-	return wallet
-}
-
+// creates an infura connection string by chainId
 func infuraStringMaker(chainId int) string {
 	url := "https://"
 	switch chainId {
@@ -74,4 +60,47 @@ func infuraStringMaker(chainId int) string {
 	}
 
 	return url + ".infura.io/v3/" + goGetDotEnv("INFURA_KEY")
+}
+
+// returns a wallet with default balance for given chain
+func GetDefaultBalance(address string, chainId int) Wallet {
+	account := common.HexToAddress(address)
+	wallet := Wallet{
+		ADDRESS: account.String(),
+	}
+
+	//goerli, polygon-mainnet, polygon-mumbai, rinkeby, ropsten, kovan, mainnet
+	client, err := ethclient.Dial(infuraStringMaker(1))
+	wei, err := client.BalanceAt(context.Background(), account, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	eth := util.ToDecimal(wei, 18)
+	wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: 1, BALANCE: eth})
+
+	client.Close()
+
+	return wallet
+}
+
+func GetAllBalances(address string) Wallet {
+	account := common.HexToAddress(address)
+	wallet := Wallet{
+		ADDRESS: account.String(),
+	}
+
+	//goerli, polygon-mainnet, polygon-mumbai, rinkeby, ropsten, kovan, mainnet
+	chainIds := []int{1, 5, 137}
+
+	for _, chainId := range chainIds {
+		client, err := ethclient.Dial(infuraStringMaker(chainId))
+		wei, err := client.BalanceAt(context.Background(), account, nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		eth := util.ToDecimal(wei, 18)
+		wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: chainId, BALANCE: eth})
+	}
+
+	return wallet
 }

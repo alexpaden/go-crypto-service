@@ -2,14 +2,17 @@ package balances
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"math"
+	"math/big"
 	"os"
 
-	util "github.com/alexpaden/go-crypto-service/utils"
+	"github.com/alexpaden/go-crypto-service/token"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/joho/godotenv"
-	"github.com/shopspring/decimal"
 )
 
 type Wallet struct {
@@ -18,8 +21,9 @@ type Wallet struct {
 }
 
 type Balance struct {
-	CHAINID int
-	BALANCE decimal.Decimal
+	CHAINID  int
+	BALANCE  *big.Float
+	CONTRACT string
 }
 
 // retrieves env variables from ./.env file
@@ -69,7 +73,10 @@ func GetDefaultBalance(address string, chainId int) Wallet {
 	if err != nil {
 		log.Fatal(err)
 	}
-	eth := util.ToDecimal(wei, 18)
+
+	//eth := util.ToDecimal(wei, 18)
+	eth := new(big.Float)
+	eth.SetString(wei.String())
 	wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: chainId, BALANCE: eth})
 
 	client.Close()
@@ -92,29 +99,69 @@ func GetAllDefaultBalances(address string) Wallet {
 		if err != nil {
 			log.Fatal(err)
 		}
-		eth := util.ToDecimal(wei, 18)
+
+		//eth := util.ToDecimal(wei, 18)
+		eth := new(big.Float)
+		eth.SetString(wei.String())
 		wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: chainId, BALANCE: eth})
 	}
 
 	return wallet
 }
 
-func GetBalanceToken(address string, chainId int, tokenAddress string) Wallet {
-	account := common.HexToAddress(address)
+func GetTokenBalance(walletAddress string, chainId int, contractAddress string) Wallet {
+
+	client, err := ethclient.Dial(infuraStringMaker(chainId))
+	tokenAddress := common.HexToAddress(contractAddress)
+	address := common.HexToAddress(walletAddress)
 	wallet := Wallet{
-		ADDRESS: account.String(),
+		ADDRESS: address.String(),
 	}
 
-	//goerli, polygon-mainnet, polygon-mumbai, rinkeby, ropsten, kovan, mainnet
-	client, err := ethclient.Dial(infuraStringMaker(chainId))
-	wei, err := client.BalanceAt(context.Background(), account, nil)
+	// create a new instance of the token contract bound to a specific deployed contract
+	instance, err := token.NewToken(tokenAddress, client)
 	if err != nil {
 		log.Fatal(err)
 	}
-	eth := util.ToDecimal(wei, 18)
-	wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: chainId, BALANCE: eth})
 
-	client.Close()
+	// call BalanceOf function that takes an address and returns a *big.Int
+	bal, err := instance.BalanceOf(&bind.CallOpts{}, address)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// name of token contract
+	name, err := instance.Name(&bind.CallOpts{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// symbol of token contract
+	symbol, err := instance.Symbol(&bind.CallOpts{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// num decimals of token contract
+	decimals, err := instance.Decimals(&bind.CallOpts{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("name: %s\n", name)         // "name: Golem Network"
+	fmt.Printf("symbol: %s\n", symbol)     // "symbol: GNT"
+	fmt.Printf("decimals: %v\n", decimals) // "decimals: 18"
+	fmt.Printf("wei: %s\n", bal)           // "wei: 74605500647408739782407023"
+
+	// convert wei to eth
+	//balance := util.ToDecimal(bal, 18)
+	fbal := new(big.Float)
+	fbal.SetString(bal.String())
+	balance := new(big.Float).Quo(fbal, big.NewFloat(math.Pow10(int(decimals))))
+
+	fmt.Printf("balance: %f", balance) // "balance: 74605500.647409"
+
+	wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: chainId, BALANCE: balance, CONTRACT: contractAddress})
 
 	return wallet
 }

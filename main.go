@@ -33,19 +33,21 @@ func main() {
 		balance := balances.GetDefaultBalance(address, chainId)
 		c.IndentedJSON(http.StatusOK, balance)
 	})
-	/*
-		router.GET("/balances/:address/:chainId/:token", func(c *gin.Context) {
-			address := c.Param("address")
-			chainId, err := strconv.Atoi(c.Param("chainId"))
-			if err != nil {
-				c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-				return
-			}
-			token := c.Param("token")
-			balance := balances.GetTokenBalance(address, chainId, token)
-			c.IndentedJSON(http.StatusOK, balance)
-		})
-	*/
+
+	router.GET("/balances/:address/:chainId/:token", func(c *gin.Context) {
+		// 0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0 polygon contract
+		// 0x7D38aE457a3E24E5aF60a637638e134c97e2a1d5 wallet address
+		address := c.Param("address")
+		chainId, err := strconv.Atoi(c.Param("chainId"))
+		if err != nil {
+			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		token := c.Param("token")
+		balance := balances.GetTokenBalance(address, chainId, token)
+		c.IndentedJSON(http.StatusOK, balance)
+	})
+
 	router.Run("localhost:8080")
 	//router.GET("/test", balances.Hello)
 }

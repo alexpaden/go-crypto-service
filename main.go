@@ -13,13 +13,13 @@ func main() {
 	router := gin.Default()
 	router.GET("/balances", func(c *gin.Context) {
 		//default := balances.GetDefaultBalance("0x71c7656ec7ab88b098defb751b7401b5f6d8976f", 1)
-		balances := balances.GetAllBalances("0x71c7656ec7ab88b098defb751b7401b5f6d8976f")
+		balances := balances.GetAllDefaultBalances("0x71c7656ec7ab88b098defb751b7401b5f6d8976f")
 		c.IndentedJSON(http.StatusOK, balances)
 	})
 
 	router.GET("/balances/:address", func(c *gin.Context) {
 		address := c.Param("address")
-		balances := balances.GetAllBalances(address)
+		balances := balances.GetAllDefaultBalances(address)
 		c.IndentedJSON(http.StatusOK, balances)
 	})
 

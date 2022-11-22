@@ -77,7 +77,7 @@ func GetDefaultBalance(address string, chainId int) Wallet {
 	return wallet
 }
 
-func GetAllBalances(address string) Wallet {
+func GetAllDefaultBalances(address string) Wallet {
 	account := common.HexToAddress(address)
 	wallet := Wallet{
 		ADDRESS: account.String(),

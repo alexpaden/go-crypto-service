@@ -21,9 +21,8 @@ type Wallet struct {
 }
 
 type Balance struct {
-	CHAINID  int
-	BALANCE  *big.Float
-	CONTRACT string
+	CHAINID int
+	BALANCE *big.Float
 }
 
 // retrieves env variables from ./.env file
@@ -161,7 +160,7 @@ func GetTokenBalance(walletAddress string, chainId int, contractAddress string) 
 
 	fmt.Printf("balance: %f", balance) // "balance: 74605500.647409"
 
-	wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: chainId, BALANCE: balance, CONTRACT: contractAddress})
+	wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: chainId, BALANCE: balance})
 
 	return wallet
 }

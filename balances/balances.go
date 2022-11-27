@@ -19,6 +19,7 @@ type Wallet struct {
 	BALANCES []Balance
 }
 
+// should be lowercase?
 type Balance struct {
 	CHAINID int
 	BALANCE *big.Float
@@ -48,13 +49,42 @@ func GetDefaultBalance(address string, chainId int) Wallet {
 	return wallet
 }
 
+func getMagicBal(address string, chainId int, ch chan Balance) {
+	balance := GetDefaultBalance(address, chainId)
+	ch <- balance.BALANCES[0]
+}
+
 func GetAllDefaultBalances(address string) Wallet {
 	account := common.HexToAddress(address)
 	wallet := Wallet{
 		ADDRESS: account.String(),
 	}
 
-	//goerli, polygon-mainnet, polygon-mumbai, rinkeby, ropsten, kovan, mainnet
+	chainIds := []int{1, 5, 137}
+
+	ch := make(chan Balance)
+
+	for _, chainId := range chainIds {
+		go getMagicBal(address, chainId, ch)
+	}
+	balances := make([]Balance, len(chainIds))
+
+	for i := range balances {
+		balances[i] = <-ch
+	}
+
+	wallet.BALANCES = balances
+
+	return wallet
+}
+
+/*
+func GetAllDefaultBalances(address string) Wallet {
+	account := common.HexToAddress(address)
+	wallet := Wallet{
+		ADDRESS: account.String(),
+	}
+
 	chainIds := []int{1, 5, 137}
 
 	for _, chainId := range chainIds {
@@ -72,6 +102,7 @@ func GetAllDefaultBalances(address string) Wallet {
 
 	return wallet
 }
+*/
 
 func GetTokenBalance(walletAddress string, chainId int, contractAddress string) Wallet {
 

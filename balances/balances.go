@@ -6,13 +6,12 @@ import (
 	"log"
 	"math"
 	"math/big"
-	"os"
 
 	"github.com/alexpaden/go-crypto-service/token"
+	util "github.com/alexpaden/go-crypto-service/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/joho/godotenv"
 )
 
 type Wallet struct {
@@ -25,40 +24,6 @@ type Balance struct {
 	BALANCE *big.Float
 }
 
-// retrieves env variables from ./.env file
-func goGetDotEnv(key string) string {
-	err := godotenv.Load("./.env")
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-	}
-	return os.Getenv(key)
-}
-
-// creates an infura connection string by chainId
-func infuraStringMaker(chainId int) string {
-	url := "https://"
-	switch chainId {
-	case 1:
-		url = url + "mainnet"
-	case 3:
-		url = url + "ropsten"
-	case 4:
-		url = url + "rinkeby"
-	case 5:
-		url = url + "goerli"
-	case 42:
-		url = url + "kovan"
-	case 137:
-		url = url + "polygon-mainnet"
-	case 80001:
-		url = url + "polygon-mumbai"
-	default:
-		url = url + "mainnet"
-	}
-
-	return url + ".infura.io/v3/" + goGetDotEnv("INFURA_KEY")
-}
-
 // returns a wallet with default balance for given chain
 func GetDefaultBalance(address string, chainId int) Wallet {
 	account := common.HexToAddress(address)
@@ -67,7 +32,7 @@ func GetDefaultBalance(address string, chainId int) Wallet {
 	}
 
 	//goerli, polygon-mainnet, polygon-mumbai, rinkeby, ropsten, kovan, mainnet
-	client, err := ethclient.Dial(infuraStringMaker(chainId))
+	client, err := ethclient.Dial(util.InfuraStringMaker(chainId))
 	wei, err := client.BalanceAt(context.Background(), account, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -93,7 +58,7 @@ func GetAllDefaultBalances(address string) Wallet {
 	chainIds := []int{1, 5, 137}
 
 	for _, chainId := range chainIds {
-		client, err := ethclient.Dial(infuraStringMaker(chainId))
+		client, err := ethclient.Dial(util.InfuraStringMaker(chainId))
 		wei, err := client.BalanceAt(context.Background(), account, nil)
 		if err != nil {
 			log.Fatal(err)
@@ -110,7 +75,7 @@ func GetAllDefaultBalances(address string) Wallet {
 
 func GetTokenBalance(walletAddress string, chainId int, contractAddress string) Wallet {
 
-	client, err := ethclient.Dial(infuraStringMaker(chainId))
+	client, err := ethclient.Dial(util.InfuraStringMaker(chainId))
 	tokenAddress := common.HexToAddress(contractAddress)
 	address := common.HexToAddress(walletAddress)
 	wallet := Wallet{

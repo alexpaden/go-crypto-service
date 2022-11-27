@@ -2,13 +2,16 @@ package util
 
 import (
 	"encoding/hex"
+	"log"
 	"math/big"
+	"os"
 	"reflect"
 	"regexp"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/joho/godotenv"
 	"github.com/shopspring/decimal"
 	"golang.org/x/crypto/sha3"
 )
@@ -125,4 +128,39 @@ func SigRSV(isig interface{}) ([32]byte, [32]byte, uint8) {
 	V := uint8(vI + 27)
 
 	return R, S, V
+}
+
+// retrieves env variables from ./.env file
+func goGetDotEnv(key string) string {
+	println()
+	err := godotenv.Load("./.env")
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+	return os.Getenv(key)
+}
+
+// creates an infura connection string by chainId
+func InfuraStringMaker(chainId int) string {
+	url := "https://"
+	switch chainId {
+	case 1:
+		url = url + "mainnet"
+	case 3:
+		url = url + "ropsten"
+	case 4:
+		url = url + "rinkeby"
+	case 5:
+		url = url + "goerli"
+	case 42:
+		url = url + "kovan"
+	case 137:
+		url = url + "polygon-mainnet"
+	case 80001:
+		url = url + "polygon-mumbai"
+	default:
+		url = url + "mainnet"
+	}
+
+	return url + ".infura.io/v3/" + goGetDotEnv("INFURA_KEY")
 }

@@ -2,9 +2,7 @@ package balances
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"math"
 	"math/big"
 
 	"github.com/alexpaden/go-crypto-service/token"
@@ -33,6 +31,9 @@ func GoGetSingleBal(address string, chainId int, ch chan Balance) {
 	}
 
 	client, err := ethclient.Dial(util.InfuraStringMaker(chainId))
+	if err != nil {
+		log.Fatal(err)
+	}
 	wei, err := client.BalanceAt(context.Background(), account, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -93,37 +94,19 @@ func GetTokenBalance(walletAddress string, chainId int, contractAddress string) 
 	}
 
 	// name of token contract
-	name, err := instance.Name(&bind.CallOpts{})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// symbol of token contract
-	symbol, err := instance.Symbol(&bind.CallOpts{})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// num decimals of token contract
-	decimals, err := instance.Decimals(&bind.CallOpts{})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("name: %s\n", name)         // "name: Golem Network"
-	fmt.Printf("symbol: %s\n", symbol)     // "symbol: GNT"
-	fmt.Printf("decimals: %v\n", decimals) // "decimals: 18"
-	fmt.Printf("wei: %s\n", bal)           // "wei: 74605500647408739782407023"
+	//name, err := instance.Name(&bind.CallOpts{})
 
 	// convert wei to eth
 	//balance := util.ToDecimal(bal, 18)
-	fbal := new(big.Float)
-	fbal.SetString(bal.String())
-	balance := new(big.Float).Quo(fbal, big.NewFloat(math.Pow10(int(decimals))))
+	//fbal := new(big.Float)
+	//fbal.SetString(bal.String())
+	//balance := new(big.Float).Quo(fbal, big.NewFloat(math.Pow10(int(decimals))))
 
-	fmt.Printf("balance: %f", balance) // "balance: 74605500.647409"
+	//fmt.Printf("balance: %f", balance) // "balance: 74605500.647409"
 
-	wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: chainId, BALANCE: balance})
+	decimals := util.ToDecimal(bal, 18)
+
+	wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: chainId, BALANCE: decimals})
 
 	return wallet
 }

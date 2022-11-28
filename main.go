@@ -52,5 +52,4 @@ func main() {
 	})
 
 	router.Run("localhost:8080")
-	//router.GET("/test", balances.Hello)
 }

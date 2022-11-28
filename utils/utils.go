@@ -1,32 +1,16 @@
 package util
 
 import (
-	"encoding/hex"
 	"log"
 	"math/big"
 	"os"
 	"reflect"
 	"regexp"
-	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/joho/godotenv"
 	"github.com/shopspring/decimal"
-	"golang.org/x/crypto/sha3"
 )
-
-// PublicKeyBytesToAddress ...
-func PublicKeyBytesToAddress(publicKey []byte) common.Address {
-	var buf []byte
-
-	hash := sha3.NewLegacyKeccak256()
-	hash.Write(publicKey[1:]) // remove EC prefix 04
-	buf = hash.Sum(nil)
-	address := buf[12:]
-
-	return common.HexToAddress(hex.EncodeToString(address))
-}
 
 // IsValidAddress validate hex address
 func IsValidAddress(iaddress interface{}) bool {
@@ -98,36 +82,6 @@ func ToWei(iamount interface{}, decimals int) *big.Int {
 	wei.SetString(result.String(), 10)
 
 	return wei
-}
-
-// CalcGasCost calculate gas cost given gas limit (units) and gas price (wei)
-func CalcGasCost(gasLimit uint64, gasPrice *big.Int) *big.Int {
-	gasLimitBig := big.NewInt(int64(gasLimit))
-	return gasLimitBig.Mul(gasLimitBig, gasPrice)
-}
-
-// SigRSV signatures R S V returned as arrays
-func SigRSV(isig interface{}) ([32]byte, [32]byte, uint8) {
-	var sig []byte
-	switch v := isig.(type) {
-	case []byte:
-		sig = v
-	case string:
-		sig, _ = hexutil.Decode(v)
-	}
-
-	sigstr := common.Bytes2Hex(sig)
-	rS := sigstr[0:64]
-	sS := sigstr[64:128]
-	R := [32]byte{}
-	S := [32]byte{}
-	copy(R[:], common.FromHex(rS))
-	copy(S[:], common.FromHex(sS))
-	vStr := sigstr[128:130]
-	vI, _ := strconv.Atoi(vStr)
-	V := uint8(vI + 27)
-
-	return R, S, V
 }
 
 // retrieves env variables from ./.env file

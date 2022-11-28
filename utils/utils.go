@@ -146,10 +146,6 @@ func InfuraStringMaker(chainId int) string {
 	switch chainId {
 	case 1:
 		url = url + "mainnet"
-	case 3:
-		url = url + "ropsten"
-	case 4:
-		url = url + "rinkeby"
 	case 5:
 		url = url + "goerli"
 	case 42:
@@ -159,7 +155,7 @@ func InfuraStringMaker(chainId int) string {
 	case 80001:
 		url = url + "polygon-mumbai"
 	default:
-		url = url + "mainnet"
+		log.Fatalf("requested chainId %v is not supported on infura", chainId)
 	}
 
 	return url + ".infura.io/v3/" + goGetDotEnv("INFURA_KEY")

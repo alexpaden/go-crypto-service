@@ -25,14 +25,13 @@ type Balance struct {
 	BALANCE *big.Float
 }
 
-// returns a wallet with default balance for given chain
-func GetDefaultBalance(address string, chainId int) Wallet {
+// used for many balances as goroutine
+func GoGetSingleBal(address string, chainId int, ch chan Balance) {
 	account := common.HexToAddress(address)
 	wallet := Wallet{
 		ADDRESS: account.String(),
 	}
 
-	//goerli, polygon-mainnet, polygon-mumbai, rinkeby, ropsten, kovan, mainnet
 	client, err := ethclient.Dial(util.InfuraStringMaker(chainId))
 	wei, err := client.BalanceAt(context.Background(), account, nil)
 	if err != nil {
@@ -45,16 +44,10 @@ func GetDefaultBalance(address string, chainId int) Wallet {
 	wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: chainId, BALANCE: eth})
 
 	client.Close()
-
-	return wallet
+	ch <- wallet.BALANCES[0]
 }
 
-func getMagicBal(address string, chainId int, ch chan Balance) {
-	balance := GetDefaultBalance(address, chainId)
-	ch <- balance.BALANCES[0]
-}
-
-func GetAllDefaultBalances(address string) Wallet {
+func GetManyBalances(address string) Wallet {
 	account := common.HexToAddress(address)
 	wallet := Wallet{
 		ADDRESS: account.String(),
@@ -65,7 +58,7 @@ func GetAllDefaultBalances(address string) Wallet {
 	ch := make(chan Balance)
 
 	for _, chainId := range chainIds {
-		go getMagicBal(address, chainId, ch)
+		go GoGetSingleBal(address, chainId, ch)
 	}
 	balances := make([]Balance, len(chainIds))
 
@@ -77,32 +70,6 @@ func GetAllDefaultBalances(address string) Wallet {
 
 	return wallet
 }
-
-/*
-func GetAllDefaultBalances(address string) Wallet {
-	account := common.HexToAddress(address)
-	wallet := Wallet{
-		ADDRESS: account.String(),
-	}
-
-	chainIds := []int{1, 5, 137}
-
-	for _, chainId := range chainIds {
-		client, err := ethclient.Dial(util.InfuraStringMaker(chainId))
-		wei, err := client.BalanceAt(context.Background(), account, nil)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		//eth := util.ToDecimal(wei, 18)
-		eth := new(big.Float)
-		eth.SetString(wei.String())
-		wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: chainId, BALANCE: eth})
-	}
-
-	return wallet
-}
-*/
 
 func GetTokenBalance(walletAddress string, chainId int, contractAddress string) Wallet {
 

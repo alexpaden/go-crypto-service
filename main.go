@@ -12,14 +12,13 @@ func main() {
 
 	router := gin.Default()
 	router.GET("/balances", func(c *gin.Context) {
-		//default := balances.GetDefaultBalance("0x71c7656ec7ab88b098defb751b7401b5f6d8976f", 1)
-		balances := balances.GetAllDefaultBalances("0x71c7656ec7ab88b098defb751b7401b5f6d8976f")
+		balances := balances.GetManyBalances("0x71c7656ec7ab88b098defb751b7401b5f6d8976f")
 		c.IndentedJSON(http.StatusOK, balances)
 	})
 
 	router.GET("/balances/:address", func(c *gin.Context) {
 		address := c.Param("address")
-		balances := balances.GetAllDefaultBalances(address)
+		balances := balances.GetManyBalances(address)
 		c.IndentedJSON(http.StatusOK, balances)
 	})
 
@@ -30,7 +29,11 @@ func main() {
 			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		balance := balances.GetDefaultBalance(address, chainId)
+		ch := make(chan balances.Balance)
+		go balances.GoGetSingleBal(address, chainId, ch)
+		balance := <-ch
+
+		//balance := balances.GetSingleBalance(address, chainId)
 		c.IndentedJSON(http.StatusOK, balance)
 	})
 

@@ -8,6 +8,8 @@ import (
 	"os"
 	"regexp"
 
+	"github.com/alexpaden/go-crypto-service/token"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/joho/godotenv"
@@ -24,6 +26,21 @@ type Balance struct {
 	BALANCE decimal.Decimal `json:"balance"`
 }
 
+func retrieveBal(address string, chainId int, ch chan Balance) {
+	account := common.HexToAddress(address)
+	client, err := ethclient.Dial(infuraStringMaker(chainId))
+	if err != nil {
+		log.Panic(err)
+	}
+	wei, err := client.BalanceAt(context.Background(), account, nil)
+	if err != nil {
+		log.Panic(err)
+	}
+	client.Close()
+	bal := weiToDecimalRounded(wei, 18)
+	ch <- Balance{CHAINID: chainId, BALANCE: bal}
+}
+
 func RetrieveSingleBal(address string, chainId int) (*Wallet, error) {
 	if !isValidAddress(address) {
 		err := errors.New("invalid address")
@@ -37,12 +54,13 @@ func RetrieveSingleBal(address string, chainId int) (*Wallet, error) {
 	wallet := Wallet{
 		ADDRESS: account.String(),
 	}
-	// ---------
+
+	// create channel to receive balance
 	ch := make(chan Balance)
-	go xRetrieveBal(address, chainId, ch)
+	go retrieveBal(address, chainId, ch)
 	balance := <-ch
 	wallet.BALANCES = append(wallet.BALANCES, balance)
-	// -------
+
 	return &wallet, nil
 }
 
@@ -51,41 +69,70 @@ func RetrieveManyBalances(address string) (*Wallet, error) {
 		err := errors.New("invalid address")
 		return nil, err
 	}
-
 	account := common.HexToAddress(address)
 	wallet := Wallet{
 		ADDRESS: account.String(),
 	}
 
-	// ---------
+	// loop channels to receive balances
 	ch := make(chan Balance)
 	chainIds := []int{1, 5, 137}
 	for _, chainId := range chainIds {
-		go xRetrieveBal(address, chainId, ch)
+		go retrieveBal(address, chainId, ch)
 	}
 	balances := make([]Balance, len(chainIds))
 	for i := range balances {
 		balances[i] = <-ch
 	}
 	wallet.BALANCES = balances
-	// -------
 
 	return &wallet, nil
 }
 
-func xRetrieveBal(address string, chainId int, ch chan Balance) {
+func RetrieveTokenBal(address string, chainId int, contract string) (*Wallet, error) {
+	if !isValidAddress(address) {
+		err := errors.New("invalid address")
+		return nil, err
+	}
+	if !isValidChainId(chainId) {
+		err := errors.New("invalid chainId")
+		return nil, err
+	}
+	if !isValidAddress(contract) {
+		err := errors.New("invalid token address")
+		return nil, err
+	}
 	account := common.HexToAddress(address)
+	wallet := Wallet{
+		ADDRESS: account.String(),
+	}
+	tokenAddress := common.HexToAddress(contract)
+
+	// create client and token to query
 	client, err := ethclient.Dial(infuraStringMaker(chainId))
 	if err != nil {
 		log.Panic(err)
 	}
-	wei, err := client.BalanceAt(context.Background(), account, nil)
+	instance, err := token.NewToken(tokenAddress, client)
 	if err != nil {
 		log.Panic(err)
 	}
+	// call BalanceOf function that takes an address and returns a *big.Int
+	wei, err := instance.BalanceOf(&bind.CallOpts{}, account)
+	if err != nil {
+		log.Panic(err)
+	}
+	decimals, err := instance.Decimals(&bind.CallOpts{})
+	if err != nil {
+		log.Panic(err)
+	}
+	weiDecimals := int(decimals)
 	client.Close()
-	bal := weiToDecimalRounded(wei, 18)
-	ch <- Balance{CHAINID: chainId, BALANCE: bal}
+
+	bal := weiToDecimalRounded(wei, weiDecimals)
+	wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: chainId, BALANCE: bal})
+
+	return &wallet, nil
 }
 
 // -----------------------------

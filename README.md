@@ -13,14 +13,24 @@ This project retrieves Ethereum address balances through a GoLang API.
 
 ## Prepare
 
+Clone project repository
+
 This project currently runs on the Infura RPC, to use Infura:
-copy the .env.example file to .env and insert your Infura API key.
+copy the **.env.example** file to **.env** and insert your Infura API key.
 
   
 ## Run
 
-  T
+  From inside the **go-crypto-service** run **go run .**
   
+  **Sample links**
+  - 404 fail: http://localhost:8080/balances
+  - 200 succ: http://localhost:8080/balances/0x71c7656ec7ab88b098defb751b7401b5f6d8976f
+  - 200 succ: http://localhost:8080/balances/0x71c7656ec7ab88b098defb751b7401b5f6d8976f/1
+  - 400 fail: http://localhost:8080/balances/0x71c7656ec7ab88b098defb751b7401b5f6d8976f/11
+  - 200 succ: http://localhost:8080/balances/0x71c7656ec7ab88b098defb751b7401b5f6d8976f/1/0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0
+  - 400 fail: http://localhost:8080/balances/0x71c7656ec7ab88b098defb751b7401b5f6d8976f/11/0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0
+
 
 ## Test
 

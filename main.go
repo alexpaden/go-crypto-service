@@ -7,10 +7,15 @@ import (
 
 	"github.com/alexpaden/go-crypto-service/balances"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
 
+	err := godotenv.Load()
+	if err != nil {
+		log.Panicf("Error loading .env file")
+	}
 	router := gin.Default()
 
 	router.GET("/balances/:address/:chainId/:token", func(c *gin.Context) {

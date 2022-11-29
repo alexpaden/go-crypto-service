@@ -12,7 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/joho/godotenv"
 	"github.com/shopspring/decimal"
 )
 
@@ -117,7 +116,8 @@ func RetrieveTokenBal(address string, chainId int, contract string) (*Wallet, er
 	if err != nil {
 		log.Panic(err)
 	}
-	// call BalanceOf function that takes an address and returns a *big.Int
+
+	// find wei balance and provided decimals
 	wei, err := instance.BalanceOf(&bind.CallOpts{}, account)
 	if err != nil {
 		log.Panic(err)
@@ -126,9 +126,9 @@ func RetrieveTokenBal(address string, chainId int, contract string) (*Wallet, er
 	if err != nil {
 		log.Panic(err)
 	}
+
 	weiDecimals := int(decimals)
 	client.Close()
-
 	bal := weiToDecimalRounded(wei, weiDecimals)
 	wallet.BALANCES = append(wallet.BALANCES, Balance{CHAINID: chainId, BALANCE: bal})
 
@@ -153,16 +153,6 @@ func isValidChainId(chainId int) bool {
 	}
 }
 
-// retrieves env variables from ./.env file
-func goGetDotEnv(key string) string {
-	println()
-	err := godotenv.Load("./.env")
-	if err != nil {
-		log.Panicf("Error loading .env file")
-	}
-	return os.Getenv(key)
-}
-
 // creates an infura connection string by chainId
 func infuraStringMaker(chainId int) string {
 	url := "https://"
@@ -181,7 +171,7 @@ func infuraStringMaker(chainId int) string {
 		log.Panicf("requested chainId %v is not supported on infura, try {1, 5, 137}", chainId)
 	}
 
-	return url + ".infura.io/v3/" + goGetDotEnv("INFURA_KEY")
+	return url + ".infura.io/v3/" + os.Getenv("INFURA_KEY")
 }
 
 // IsValidAddress validate hex address

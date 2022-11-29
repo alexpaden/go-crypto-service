@@ -120,11 +120,13 @@ func RetrieveTokenBal(address string, chainId int, contract string) (*Wallet, er
 	// find wei balance and provided decimals
 	wei, err := instance.BalanceOf(&bind.CallOpts{}, account)
 	if err != nil {
-		log.Panic(err)
+		err := errors.New("error retrieving token balance, check contract address")
+		return nil, err
 	}
 	decimals, err := instance.Decimals(&bind.CallOpts{})
 	if err != nil {
-		log.Panic(err)
+		err := errors.New("issue creating token instance")
+		return nil, err
 	}
 
 	weiDecimals := int(decimals)

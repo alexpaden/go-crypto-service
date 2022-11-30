@@ -8,7 +8,7 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/alexpaden/go-crypto-service/token"
+	"github.com/alexpaden/go-crypto-service/pkg/token"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"

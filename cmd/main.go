@@ -5,14 +5,14 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/alexpaden/go-crypto-service/balances"
+	"github.com/alexpaden/go-crypto-service/pkg/balances"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
 func main() {
 
-	err := godotenv.Load()
+	err := godotenv.Load("../.env")
 	if err != nil {
 		log.Panicf("Error loading .env file")
 	}

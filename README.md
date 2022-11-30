@@ -21,7 +21,7 @@ copy the **.env.example** file to **.env** and insert your Infura API key.
   
 ## Run
 
-  From inside the **go-crypto-service** run **go run .**
+  From inside **/go-crypto-service** run **make run**
   
   **Sample links**
   - 404 fail: http://localhost:8080/balances
@@ -34,7 +34,7 @@ copy the **.env.example** file to **.env** and insert your Infura API key.
 
 ## Test
 
-Tests can be performed with the "go test" command from within the package directory "go-crypto-services/balances"
+Tests can be performed with **make test-balances** from within the package directory "go-crypto-services"
 
 - Test retrieve single balance using address and chainId
 - Test retrieve token balance using address, chainId, and contract address (token)

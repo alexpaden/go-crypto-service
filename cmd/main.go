@@ -12,9 +12,9 @@ import (
 
 func main() {
 
-	err := godotenv.Load("../.env")
+	err := godotenv.Load()
 	if err != nil {
-		log.Panicf("Error loading .env file")
+		log.Panicf("Error loading main .env file")
 	}
 	router := gin.Default()
 

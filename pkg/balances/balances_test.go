@@ -92,21 +92,21 @@ func TestRetrieveManyBalances(t *testing.T) {
 	}
 
 	{
-		wallet, err := RetrieveManyBalances(addresses[0])
+		wallet, err := RetrieveManyBals(addresses[0])
 		if wallet == nil || err != nil {
 			t.Errorf("Unexpected error for address %s", addresses[0])
 		}
 	}
 
 	{
-		wallet, err := RetrieveManyBalances(addresses[1])
+		wallet, err := RetrieveManyBals(addresses[1])
 		if wallet != nil || err == nil {
 			t.Errorf("Unexpected error for address %s", addresses[1])
 		}
 	}
 
 	{
-		wallet, err := RetrieveManyBalances(addresses[2])
+		wallet, err := RetrieveManyBals(addresses[2])
 		if wallet != nil || err == nil {
 			t.Errorf("Unexpected error for address %s", addresses[2])
 		}

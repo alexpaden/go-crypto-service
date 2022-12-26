@@ -25,6 +25,20 @@ type Balance struct {
 	BALANCE decimal.Decimal `json:"balance"`
 }
 
+type Service struct {
+	RetrieveManyBals  func(address string) (*Wallet, error)
+	RetrieveSingleBal func(address string, chainId int) (*Wallet, error)
+	RetrieveTokenBal  func(address string, chainId int, contract string) (*Wallet, error)
+	Test              func()
+}
+
+func NewService() *Service {
+	return &Service{
+		RetrieveManyBals:  RetrieveManyBals,
+		RetrieveSingleBal: RetrieveSingleBal,
+		RetrieveTokenBal:  RetrieveTokenBal}
+}
+
 func retrieveBal(address string, chainId int, ch chan Balance) {
 	account := common.HexToAddress(address)
 	client, err := ethclient.Dial(infuraStringMaker(chainId))
@@ -63,7 +77,7 @@ func RetrieveSingleBal(address string, chainId int) (*Wallet, error) {
 	return &wallet, nil
 }
 
-func RetrieveManyBalances(address string) (*Wallet, error) {
+func RetrieveManyBals(address string) (*Wallet, error) {
 	if !isValidAddress(address) {
 		err := errors.New("invalid address")
 		return nil, err
